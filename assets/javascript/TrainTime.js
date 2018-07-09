@@ -13,8 +13,48 @@ var config = {
     var destination=""
     var first =""
     var frequency=""
+    var mins=""
+    var next=""
 
     console.log(database)
+///////////////////////////
+
+
+
+database.ref().on("child_added", function(childSnapshot) {
+      
+    //Log everything that's coming out of snapshot
+    console.log("Print childSnapshot here?")
+    console.log("name: "+childSnapshot.val().name);
+    console.log("destination: "+childSnapshot.val().destination);
+    console.log("first: "+childSnapshot.val().first);
+    console.log("frequency: "+childSnapshot.val().frequency);
+    console.log("minutes: "+childSnapshot.val().mins);
+    console.log("next: "+childSnapshot.val().next);
+    console.log("dateAdded: "+childSnapshot.val().dateAdded);
+    
+    
+
+    $("#entry").append("<tr><td id='name'> " + childSnapshot.val().name 
+    +" </td><td id='destination'> " + childSnapshot.val().destination +
+  " </td><td id='frequency'> " + childSnapshot.val().frequency + "</td>" 
+  +" <td id='next'> " + childSnapshot.val().next +
+   " </td><td id='mins'> " + childSnapshot.val().mins + "</td>" 
+  +" </td>"+
+  "</tr>");
+
+})
+
+
+
+
+
+
+
+
+
+
+
 //////////////////////////////////////////////////////////////////////////////////////
     function update(){ 
 
@@ -25,87 +65,44 @@ var config = {
       
             //Log everything that's coming out of snapshot
             console.log("Print childSnapshot here?")
-            console.log("name: "+childSnapshot.val().name);
-            console.log("destination: "+childSnapshot.val().destination);
-            console.log("first: "+childSnapshot.val().first);
-            console.log("frequency: "+childSnapshot.val().frequency);
-            console.log("dateAdded: "+childSnapshot.val().dateAdded);
+            console.log("name in database: "+childSnapshot.val().name);
+            console.log("destination in database: "+childSnapshot.val().destination);
+            console.log("first in database : "+childSnapshot.val().first);
+            console.log("frequency in database: "+childSnapshot.val().frequency);
+            console.log("dateAdded in database: "+childSnapshot.val().dateAdded);
             
             
 
-            $("#entry").append("<tr><td id='name'> " + childSnapshot.val().name +
-        " </td><td id='destination'> " + childSnapshot.val().destination +
-          " </td><td id='first'> " + childSnapshot.val().first + "<td></td>" +
-            " </td><td id='frequency'> " + childSnapshot.val().frequency + " </td></tr>");
+            $("#entry").append("<tr><td id='name'> " + childSnapshot.val().name 
+    +" </td><td id='destination'> " + childSnapshot.val().destination +
+  " </td><td id='frequency'> " + childSnapshot.val().frequency + "</td>" 
+  +" <td id='next'> " + childSnapshot.val().next +
+   " </td><td id='mins'> " + childSnapshot.val().mins + "</td>" 
+  +" </td>"+
+  "</tr>");
 
         })
 
-        //Write data to fields
-
         
-        
-      
-    
-        
-        //clear form and 
-
-        //push data from form to table
         
 
     }
 /////////////////////////////////////////////////////////////////////////////////////
    function backup(){
-    if( Name!=='' && Destination!=='' && First!=='' && Frequency!=='' ){
+    if( name!=='' && destination!=='' && first!=='' && frequency!=='' ){
         console.log("Name "+ name)
         console.log("Going to "+destination)
         console.log("First train was at "+first)
         console.log("Frequency of this train is "+frequency)
  
-        database.ref().push({
-         name: name,
-         destination: destination,
-         first: first,
-         frequency: frequency,
-         dateAdded: firebase.database.ServerValue.TIMESTAMP
+        
+
  
-         ///////
-         
- 
-         });
          $("#entry").html("")
-         
          update();
-         /////////////////
- 
-        //  database.ref().on("child_added", function(childSnapshot) {
-        //      $("#myData").append("<tr><td id='myEmployee'> " + childSnapshot.val().employee +
-        //  " </td><td id='myRole'> " + childSnapshot.val().role +
-        //    " </td><td id='myDate'> " + childSnapshot.val().date + "<td></td>" +
-        //      " </td><td id='myRate'> " + childSnapshot.val().rate + " </td></tr>");
- 
- 
- 
-         /////
-         // dataRef.ref().orderByChild("dateAdded").limitToLast(1).on("child_added", function(snapshot) {
-         //     // Change the HTML to reflect
-         //     $("#myEmployee").text(snapshot.val().employee);
-         //     $("#myRole").text(snapshot.val().role);
-         //     $("#myDate").text(snapshot.val().date);
-         //     $("#myRate").text(snapshot.val().rate);
-         //   });
- 
- 
-     //     // var starCountRef = firebase.database().ref('posts/' + postId + '/starCount');
-     //     // starCountRef.on('value', function(snapshot) {
-     //     //  updateStarCount(postElement, snapshot.val());
-     //     // });
- 
- 
- 
- 
-     } //end database backup
- 
-     console.log(name+destination+first+frequency)
+        
+        } //end database backup
+  
  
  
  
@@ -125,11 +122,52 @@ $("#send").on("click", function(){
     first=$("#First").val().trim()
     frequency=$("#Frequency").val().trim()
 
-    //Calcultions for next arival and minutes to next train
-    // difference= currenttime - first
-    // modules= (currenttime-first) % frequency
-    // next= difference - modulus + frequnecy
-    //mins= next - current
+     var timeNow=moment().format('HH:mm')
+     console.log('The time Now: '+timeNow); ///////// moment.js experiment
+     
+
+    var difference = moment
+        .duration(moment(timeNow, 'HH:mm')
+        .diff(moment(first, 'HH:mm'))
+        ).asMinutes();
+        console.log(difference +" minutes difference"); // 
+     
+        //Calcultions for next arival and minutes to next train
+    
+    
+    
+    var div= difference / frequency; 
+    console.log("div: "+div)  
+
+    var remainder= (difference) % frequency; 
+    console.log("Remainder is " + remainder);
+    
+    var mins = frequency-remainder;
+    console.log("Time to next train is " + mins);
+    
+    var next = moment().add(mins, 'minutes').format('HH:mm')
+    console.log("next is " + next);
+
+    database.ref().push({
+        name: name,
+        destination: destination,
+        first: first,
+        frequency: frequency,
+        dateAdded: firebase.database.ServerValue.TIMESTAMP,
+        mins:mins,
+        next:next 
+    });
+    
+    
+    
+   //remove all values from fields
+    $("#Name").val(null)
+    $("#Destination").val(null)
+    $("#First").val(null)
+    $("#Frequency").val(null)
+
+
+    
 
     backup();
    
